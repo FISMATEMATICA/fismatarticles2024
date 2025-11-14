@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Publications 2025</title>
+  <title>Publications 2024</title>
+
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
@@ -12,7 +13,7 @@
     }
 
     header {
-      background-color: #004d4d; /* azul petróleo */
+      background-color: #004d4d;
       padding: 2em;
       text-align: center;
     }
@@ -46,7 +47,7 @@
     .title a {
       font-size: 1.2em;
       font-weight: bold;
-      color: #004d4d; /* azul petróleo */
+      color: #004d4d;
       text-decoration: none;
     }
 
@@ -61,13 +62,17 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1>Publications 2024</h1>
   </header>
+
   <div id="results">Carregando...</div>
 
   <script>
+    const workerURL = "https://spring-glade-d911.fismat.workers.dev/?url=";
+
     const nomesDestacados = [
       "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
       "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
@@ -80,70 +85,83 @@
       "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
       "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
-      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral", 
+      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
       "R. Zukanovich Funchal", "Pedro Bittar"
     ];
-
-    const resultsDiv = document.getElementById("results");
 
     function deveDestacarAutor(nomeAutor) {
       return nomesDestacados.some(autor => autor.toLowerCase() === nomeAutor.toLowerCase());
     }
 
     async function carregarResultados() {
-      const autores = nomesDestacados.map(nome => `au:"${nome.replace(/ /g, "+")}"`).join("+OR+");
-      const url = `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
+      const autores = nomesDestacados
+        .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
+        .join("+OR+");
+
+      const arxivURL =
+        `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=200`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(workerURL + encodeURIComponent(arxivURL));
         const xmlText = await response.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, "application/xml");
 
-        const entries = xml.querySelectorAll("entry");
-        if (entries.length === 0) {
-          resultsDiv.innerHTML = "Nenhum resultado encontrado.";
-          return;
-        }
+        const entries = Array.from(xml.querySelectorAll("entry"));
+        const vistos = new Set();
+        let papers = [];
 
-        let html = "";
         entries.forEach(entry => {
+          const id = entry.querySelector("id")?.textContent;
+          if (vistos.has(id)) return;
+          vistos.add(id);
+
+          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
+          if (!published.startsWith("2024")) return;
+
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = entry.querySelector("id")?.textContent || "#";
-          const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
-          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
 
-          if (!published.startsWith("2024")) return;
+          const authors = Array.from(entry.querySelectorAll("author > name"))
+            .map(a => a.textContent.trim());
+
+          const destacados = authors.filter(a => deveDestacarAutor(a));
+          const outros = authors.filter(a => !deveDestacarAutor(a));
+          const ordenados = [...destacados, ...outros];
+
+          const exibidos = ordenados.length > 8
+            ? [...ordenados.slice(0, 8), "et al."]
+            : ordenados;
+
+          const authorsHTML = exibidos
+            .map(a => deveDestacarAutor(a) ? `<strong>${a}</strong>` : a)
+            .join(", ");
 
           const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref");
           const journal = journalRef ? journalRef.textContent.trim() : "";
 
-          const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
-          const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
-          const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
-
-          let autoresExibidos = autoresOrdenados.slice(0, 8);
-          if (autoresOrdenados.length > 8) {
-            autoresExibidos.push("et al.");
-          }
-
-          const authorsHTML = autoresExibidos.map(nome =>
-            deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
-          ).join(", ");
-
-          html += `
-            <div class="paper">
-              <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
-              <div class="meta">Autores: ${authorsHTML}</div>
-              <div class="meta">Publicado em: ${published}</div>
-              ${journal ? `<div class="meta">${journal}</div>` : ""}
-            </div>
-          `;
+          papers.push({
+            published,
+            html: `
+              <div class="paper">
+                <div class="title"><a href="${link}" target="_blank">${title}</a></div>
+                <div class="meta">Autores: ${authorsHTML}</div>
+                <div class="meta">Publicado em: ${published}</div>
+                ${journal ? `<div class="meta">${journal}</div>` : ""}
+              </div>
+            `
+          });
         });
 
-        resultsDiv.innerHTML = html || "Nenhum artigo de 2024 encontrado.";
+        papers.sort((a, b) => b.published.localeCompare(a.published));
+
+        document.getElementById("results").innerHTML =
+          papers.map(p => p.html).join("") ||
+          "Nenhum artigo de 2024 encontrado.";
+
       } catch (error) {
-        resultsDiv.innerHTML = "Erro ao carregar os dados: " + error.message;
+        document.getElementById("results").innerHTML =
+          "Erro ao carregar os dados: " + error.message;
       }
     }
 
