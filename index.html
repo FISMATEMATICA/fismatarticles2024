@@ -89,7 +89,6 @@
       "R. Zukanovich Funchal", "Pedro Bittar"
     ];
 
-    // Normalização para comparar nomes sem erros (acentos, maiúsculas/minúsculas, espaços)
     function norm(text) {
       return (text || "")
         .normalize("NFD")
@@ -101,7 +100,7 @@
 
     function deveDestacarAutor(nomeAutor) {
       const n = norm(nomeAutor);
-      return nomesDestacados.some(autor => norm(autor) === n);
+      return nomesDestacados.some(a => norm(a) === n);
     }
 
     async function carregarResultados() {
@@ -115,6 +114,7 @@
       try {
         const response = await fetch(workerURL + encodeURIComponent(arxivURL));
         const xmlText = await response.text();
+
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, "application/xml");
 
@@ -128,7 +128,11 @@
           vistos.add(id);
 
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
+          const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
+
+          // ✔ Critério B: published == 2024 E updated == 2024
           if (!published.startsWith("2024")) return;
+          if (!updated.startsWith("2024")) return;
 
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = id;
@@ -137,8 +141,6 @@
             .map(a => a.textContent.trim());
 
           const destacados = authors.filter(a => deveDestacarAutor(a));
-
-          // 🔥 Correção principal: pular artigos sem autores da lista
           if (destacados.length === 0) return;
 
           const outros = authors.filter(a => !deveDestacarAutor(a));
@@ -162,6 +164,7 @@
                 <div class="title"><a href="${link}" target="_blank">${title}</a></div>
                 <div class="meta">Autores: ${authorsHTML}</div>
                 <div class="meta">Publicado em: ${published}</div>
+                <div class="meta">Última atualização: ${updated}</div>
                 ${journal ? `<div class="meta">${journal}</div>` : ""}
               </div>
             `
@@ -184,4 +187,3 @@
   </script>
 </body>
 </html>
-
