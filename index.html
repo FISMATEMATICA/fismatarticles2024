@@ -108,9 +108,7 @@
         .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
         .join("+OR+");
 
-      // ✅ Estratégia Otimizada:
-      // 1. Busca todos os artigos relevantes dos autores (max_results=500).
-      // 2. Confia no filtro local do JavaScript para mostrar APENAS os de 2024.
+      // ✅ Lógica de busca otimizada (max_results=500, sem filtro de data rígido)
       const arxivURL =
         `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=500`;
 
@@ -133,7 +131,7 @@
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
           const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
 
-          // Filtro de Ano (Publicado ou Atualizado em 2024)
+          // Filtro local garante que só artigos de 2024 (published ou updated) sejam exibidos
           if (!(
             published.startsWith("2024") ||
             updated.startsWith("2024")
