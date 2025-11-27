@@ -89,75 +89,34 @@
       "R. Zukanovich Funchal", "Pedro Bittar"
     ];
 
-    // Normaliza texto: remove acentos, pontuação básica e deixa lowercase
+    // Normalização para comparar nomes sem erros (acentos, maiúsculas/minúsculas, espaços)
     function norm(text) {
-      if (!text) return "";
-      // remove diacríticos
-      let s = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      // remove pontuação comum (.,;:()[]{}<>/\"') e caracteres especiais, keep letters and numbers and spaces
-      s = s.replace(/[^0-9a-zA-Z\s]/g, " ");
-      // collapse spaces
-      s = s.replace(/\s+/g, " ").trim().toLowerCase();
-      return s;
+      return (text || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
     }
 
-    // retorna array de tokens (palavras) do nome normalizado
-    function tokens(text) {
-      const n = norm(text);
-      return n ? n.split(" ").filter(Boolean) : [];
-    }
-
-    // Verifica se nome destacado corresponde ao nome do autor do arXiv
-    // regra: se nomeDestTokens.length > 1 -> todos os tokens devem estar presentes em authorTokens
-    //        se nomeDestTokens.length == 1 -> exige match exato (evita coincências por sobrenome comum)
-    function authorMatchesHighlighted(authorName) {
-      const authorTokens = tokens(authorName);
-      for (const highlighted of nomesDestacados) {
-        const hTokens = tokens(highlighted);
-        if (hTokens.length === 0) continue;
-
-        if (hTokens.length === 1) {
-          // single-token highlighted: require exact token match among author tokens
-          if (authorTokens.includes(hTokens[0])) return true;
-        } else {
-          // multi-token highlighted: require ALL tokens to be present in authorTokens
-          let allPresent = true;
-          for (const t of hTokens) {
-            if (!authorTokens.includes(t)) { allPresent = false; break; }
-          }
-          if (allPresent) return true;
-        }
-      }
-      return false;
-    }
-
-    // mesma função, mas para usar quando já temos lista de authors tokens:
-    function anyHighlightedInAuthors(authorsArray) {
-      // authorsArray: ["Name One", "Name Two", ...]
-      for (const a of authorsArray) {
-        if (authorMatchesHighlighted(a)) return true;
-      }
-      return false;
+    function deveDestacarAutor(nomeAutor) {
+      const n = norm(nomeAutor);
+      return nomesDestacados.some(autor => norm(autor) === n);
     }
 
     async function carregarResultados() {
-      const autoresQuery = nomesDestacados
-        .map(nome => `au:"${nome.replace(/"/g, "").replace(/\s+/g, "+")}"`)
+      const autores = nomesDestacados
+        .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
         .join("+OR+");
 
       const arxivURL =
-        `https://export.arxiv.org/api/query?search_query=${autoresQuery}&sortBy=submittedDate&sortOrder=descending&max_results=300`;
+        `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=200`;
 
       try {
         const response = await fetch(workerURL + encodeURIComponent(arxivURL));
         const xmlText = await response.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, "application/xml");
-
-        // detect parser error
-        if (xml.querySelector("parsererror")) {
-          throw new Error("Erro ao parsear XML retornado pelo Worker.");
-        }
 
         const entries = Array.from(xml.querySelectorAll("entry"));
         const vistos = new Set();
@@ -168,16 +127,8 @@
           if (!id || vistos.has(id)) return;
           vistos.add(id);
 
-          const published = entry.querySelector("published")?.textContent?.slice(0,10) || "";
-          const updated = entry.querySelector("updated")?.textContent?.slice(0,10) || "";
-
-          const anoValido =
-            (published && published.startsWith("2024")) ||
-            (updated && updated.startsWith("2024"));
-
-          if (!anoValido) return;
-
-          const finalDate = updated || published;
+          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
+          if (!published.startsWith("2024")) return;
 
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = id;
@@ -185,12 +136,12 @@
           const authors = Array.from(entry.querySelectorAll("author > name"))
             .map(a => a.textContent.trim());
 
-          // NEW: usar a função robusta de match
-          if (!anyHighlightedInAuthors(authors)) return; // pular se nenhum autor destacado
+          const destacados = authors.filter(a => deveDestacarAutor(a));
 
-          // reorganiza autores: destacados primeiro (preservando ordem relativa)
-          const destacados = authors.filter(a => authorMatchesHighlighted(a));
-          const outros = authors.filter(a => !authorMatchesHighlighted(a));
+          // 🔥 Correção principal: pular artigos sem autores da lista
+          if (destacados.length === 0) return;
+
+          const outros = authors.filter(a => !deveDestacarAutor(a));
           const ordenados = [...destacados, ...outros];
 
           const exibidos = ordenados.length > 8
@@ -198,30 +149,30 @@
             : ordenados;
 
           const authorsHTML = exibidos
-            .map(a => authorMatchesHighlighted(a) ? `<strong>${a}</strong>` : a)
+            .map(a => deveDestacarAutor(a) ? `<strong>${a}</strong>` : a)
             .join(", ");
 
           const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref");
           const journal = journalRef ? journalRef.textContent.trim() : "";
 
           papers.push({
-            published: finalDate,
+            published,
             html: `
               <div class="paper">
-                <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a></div>
-                <div class="meta">Autores: ${escapeHtml(authorsHTML)}</div>
-                <div class="meta">Publicado em: ${escapeHtml(finalDate)}</div>
-                ${journal ? `<div class="meta">${escapeHtml(journal)}</div>` : ""}
+                <div class="title"><a href="${link}" target="_blank">${title}</a></div>
+                <div class="meta">Autores: ${authorsHTML}</div>
+                <div class="meta">Publicado em: ${published}</div>
+                ${journal ? `<div class="meta">${journal}</div>` : ""}
               </div>
             `
           });
         });
 
-        // ordenar do mais recente para o mais antigo
-        papers.sort((a,b) => b.published.localeCompare(a.published));
+        papers.sort((a, b) => b.published.localeCompare(a.published));
 
         document.getElementById("results").innerHTML =
-          papers.map(p => p.html).join("") || "Nenhum artigo de 2024 encontrado.";
+          papers.map(p => p.html).join("") ||
+          "Nenhum artigo de 2024 encontrado.";
 
       } catch (error) {
         document.getElementById("results").innerHTML =
@@ -229,14 +180,8 @@
       }
     }
 
-    // helper para escapar HTML em títulos/journals/autor
-    function escapeHtml(text) {
-      if (!text) return "";
-      return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-                 .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-    }
-
     carregarResultados();
   </script>
 </body>
 </html>
+
