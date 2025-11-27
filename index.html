@@ -108,9 +108,11 @@
         .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
         .join("+OR+");
 
-      // ✅ ALTERAÇÃO APLICADA: Filtra por submittedDate:[2024] e aumenta max_results para 500
+      // ✅ Estratégia Otimizada:
+      // 1. Busca todos os artigos relevantes dos autores (max_results=500).
+      // 2. Confia no filtro local do JavaScript para mostrar APENAS os de 2024.
       const arxivURL =
-        `https://export.arxiv.org/api/query?search_query=submittedDate:[2024]+AND+(${autores})&sortBy=submittedDate&sortOrder=descending&max_results=500`;
+        `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=500`;
 
       try {
         const response = await fetch(workerURL + encodeURIComponent(arxivURL));
@@ -131,7 +133,7 @@
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
           const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
 
-          // Mantém o filtro local para garantir que só 2024 (published ou updated) seja exibido
+          // Filtro de Ano (Publicado ou Atualizado em 2024)
           if (!(
             published.startsWith("2024") ||
             updated.startsWith("2024")
