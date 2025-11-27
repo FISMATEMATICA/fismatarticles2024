@@ -6,8 +6,7 @@
   <title>Publications 2024</title>
 
   <style>
-    /* O CSS original de 2024 foi ligeiramente adaptado para a sintaxe otimizada do 2025,
-        mantendo a mesma estética visual. */
+    /* Estética preservada */
     body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:#f7f9fc; color:#333; }
     header { background:#004d4d; padding:2em; text-align:center; }
     header h1 { color:#fff; font-size:2.5em; margin:0; }
@@ -48,9 +47,10 @@
     ];
 
 
-    // --- Funções Auxiliares (Estrutura 2025) ---
+    // --- Funções Auxiliares ---
 
     function deveDestacarAutor(nome) {
+      // Normaliza e deixa em minúsculo para comparação
       const n = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
       return nomesDestacados.some(a => 
         a.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() === n
@@ -76,7 +76,7 @@
       const id = getText("id");
       const title = getText("title");
       const published = getText("published").slice(0, 10);
-      const updated = getText("updated").slice(0, 10); // Inclui 'updated' para filtro robusto
+      const updated = getText("updated").slice(0, 10);
       const journal_ref_node = node.getElementsByTagName("journal_ref")[0];
       const journal = journal_ref_node ? journal_ref_node.textContent.trim() : "";
 
@@ -108,33 +108,24 @@
       resultsDiv.textContent = "Carregando artigos...";
 
       try {
-        // Monta a query do arXiv usando a lista de autores
         const autoresQuery = nomesDestacados
           .map(nome => `au:"${nome.replace(/"/g, "").replace(/\s+/g, "+")}"`)
           .join("+OR+");
 
-        // Aumenta o limite para 500 para garantir que todos os artigos de 2024 sejam puxados
         const arxivURL = `https://export.arxiv.org/api/query?search_query=${autoresQuery}&sortBy=submittedDate&sortOrder=descending&max_results=500`;
-
-        // Chama seu Worker
         const proxyURL = WORKER_BASE + "?url=" + encodeURIComponent(arxivURL);
 
         const resp = await fetch(proxyURL, { method: "GET" });
         if (!resp.ok) throw new Error("Resposta do Worker: " + resp.status + " " + resp.statusText);
 
         const xmlText = await resp.text();
-
-        // Parse XML
         const xml = new DOMParser().parseFromString(xmlText, "application/xml");
         const entriesNodes = Array.from(xml.getElementsByTagName("entry"));
 
-        // Converte para objetos JS
         let entries = entriesNodes.map(parseEntry);
-
-        // Desduplica por id
         entries = dedupe(entries);
 
-        // 🎯 Filtro Robusto (Publicado OU Atualizado em 2024)
+        // Filtro Robusto (Publicado OU Atualizado em 2024)
         entries = entries.filter(e => 
           (e.published && e.published.startsWith(TARGET_YEAR)) ||
           (e.updated && e.updated.startsWith(TARGET_YEAR))
@@ -143,10 +134,9 @@
         // Filtra para incluir apenas se houver ao menos um autor destacado
         entries = entries.filter(e => e.authors.some(a => deveDestacarAutor(a)));
 
-        // Adiciona campo Date (objeto) para ordenar
+        // Adiciona campo Date para ordenação
         entries = entries.map(e => ({ 
           ...e, 
-          // Usa a data mais recente para ordenação (updated > published)
           _date: new Date(e.updated || e.published) 
         }));
 
@@ -161,14 +151,23 @@
 
         // Monta HTML
         const html = entries.map(e => {
-          const authorsHTML = e.authors
-            // Limita autores exibidos (Exemplo: 8 autores + et al.)
-            .slice(0, 8) 
-            .map(a => deveDestacarAutor(a) ? `<strong>${a}</strong>` : escapeHtml(a))
+            // Separa os autores destacados
+            const destacados = e.authors.filter(deveDestacarAutor);
+            // Separa os outros autores
+            const outros = e.authors.filter(a => !deveDestacarAutor(a));
+
+            // Junta: Destacados primeiro, Outros depois
+            const ordenados = [...destacados, ...outros];
+
+            // Limita a 8 nomes exibidos
+            const exibidos = ordenados.slice(0, 8);
+            const etAl = ordenados.length > 8 ? ", et al." : "";
+
+            // Formata com negrito
+          const authorsHTML = exibidos
+            .map(a => deveDestacarAutor(a) ? `<strong>${escapeHtml(a)}</strong>` : escapeHtml(a))
             .join(", ");
           
-          const etAl = e.authors.length > 8 ? ", et al." : "";
-
           return `
             <div class="paper">
               <div class="title"><a href="${e.id}" target="_blank" rel="noopener noreferrer">${escapeHtml(e.title)}</a></div>
