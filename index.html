@@ -130,9 +130,11 @@
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
           const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
 
-          // ✔ Critério B: published == 2024 E updated == 2024
-          if (!published.startsWith("2024")) return;
-          if (!updated.startsWith("2024")) return;
+          // ✔ Opção B correta: published==2024 OU updated==2024
+          if (!(
+            published.startsWith("2024") ||
+            updated.startsWith("2024")
+          )) return;
 
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = id;
@@ -159,6 +161,7 @@
 
           papers.push({
             published,
+            updated,
             html: `
               <div class="paper">
                 <div class="title"><a href="${link}" target="_blank">${title}</a></div>
@@ -171,7 +174,10 @@
           });
         });
 
-        papers.sort((a, b) => b.published.localeCompare(a.published));
+        // Ordenar pela data de updated OU published
+        papers.sort((a, b) =>
+          (b.updated || b.published).localeCompare(a.updated || a.published)
+        );
 
         document.getElementById("results").innerHTML =
           papers.map(p => p.html).join("") ||
@@ -187,4 +193,3 @@
   </script>
 </body>
 </html>
-
