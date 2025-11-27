@@ -85,23 +85,12 @@
       "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
       "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
-      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi", 
-      "Bárbara Amaral", "Barbara Amaral"
+      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
+      "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi"
     ];
 
-    // Normalização para comparar nomes sem erros (acentos, maiúsculas/minúsculas, espaços)
-    function norm(text) {
-      return (text || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toLowerCase();
-    }
-
     function deveDestacarAutor(nomeAutor) {
-      const n = norm(nomeAutor);
-      return nomesDestacados.some(autor => norm(autor) === n);
+      return nomesDestacados.some(autor => autor.toLowerCase() === nomeAutor.toLowerCase());
     }
 
     async function carregarResultados() {
@@ -124,23 +113,29 @@
 
         entries.forEach(entry => {
           const id = entry.querySelector("id")?.textContent;
-          if (!id || vistos.has(id)) return;
+          if (vistos.has(id)) return;
           vistos.add(id);
 
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
-          if (!published.startsWith("2024")) return;
+          const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
+
+          // ✔️ CORREÇÃO: aceitar published OU updated como 2024
+          const anoValido =
+            (published && published.startsWith("2024")) ||
+            (updated && updated.startsWith("2024"));
+
+          if (!anoValido) return;
+
+          // definir a melhor data para exibição
+          const finalDate = updated || published;
 
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
-          const link = id;
+          const link = entry.querySelector("id")?.textContent || "#";
 
           const authors = Array.from(entry.querySelectorAll("author > name"))
             .map(a => a.textContent.trim());
 
           const destacados = authors.filter(a => deveDestacarAutor(a));
-
-          // 🔥 Correção principal: pular artigos sem autores da lista
-          if (destacados.length === 0) return;
-
           const outros = authors.filter(a => !deveDestacarAutor(a));
           const ordenados = [...destacados, ...outros];
 
@@ -156,12 +151,12 @@
           const journal = journalRef ? journalRef.textContent.trim() : "";
 
           papers.push({
-            published,
+            published: finalDate,
             html: `
               <div class="paper">
                 <div class="title"><a href="${link}" target="_blank">${title}</a></div>
                 <div class="meta">Autores: ${authorsHTML}</div>
-                <div class="meta">Publicado em: ${published}</div>
+                <div class="meta">Publicado em: ${finalDate}</div>
                 ${journal ? `<div class="meta">${journal}</div>` : ""}
               </div>
             `
@@ -184,4 +179,3 @@
   </script>
 </body>
 </html>
-
