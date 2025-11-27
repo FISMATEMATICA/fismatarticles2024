@@ -108,7 +108,7 @@
         .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
         .join("+OR+");
 
-      // ✅ Lógica de busca otimizada (max_results=500, sem filtro de data rígido)
+      // Lógica de busca otimizada: max_results=500
       const arxivURL =
         `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=500`;
 
@@ -131,7 +131,7 @@
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "";
           const updated = entry.querySelector("updated")?.textContent.slice(0, 10) || "";
 
-          // Filtro local garante que só artigos de 2024 (published ou updated) sejam exibidos
+          // Filtro local para garantir que só 2024 seja exibido
           if (!(
             published.startsWith("2024") ||
             updated.startsWith("2024")
