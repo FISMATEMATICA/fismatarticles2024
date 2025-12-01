@@ -2,21 +2,19 @@
 const WORKER_URL = "https://spring-glade-d911.fismat.workers.dev";
 
 const nomesDestacados = [
-  "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
-  "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
-  "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
-  "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
-  "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
-  "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali",
-  "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
-  "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
-  "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
-  "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
-  "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida",
-  "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
-  "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes", "Ricardo Correa da Silva",
-  "R Correa da Silva", "RC da Silva", "Lua F. T. Airoldi", "Victor Hugo M. Ramos",
-  "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande", "Cleverson Andrade Goulart", "Mauricio Porto Pato"
+"Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
+      "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
+      "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
+      "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
+      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
+      "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali", "Elisa G.M. Ferreira",
+      "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
+      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
+      "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
+      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
+      "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
+      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
+      "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi"
 ];
 
 const resultsDiv = document.getElementById("results");
@@ -59,7 +57,7 @@ async function carregarResultados() {
       const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
       const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
 
-      if (!published.startsWith("2025")) return;
+      if (!published.startsWith("2024")) return;
 
       const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
       if (autoresDestacados.length === 0) return;
@@ -87,11 +85,12 @@ async function carregarResultados() {
       `;
     });
 
-    resultsDiv.innerHTML = html || "Nenhum artigo de 2025 encontrado.";
+    resultsDiv.innerHTML = html || "Nenhum artigo de 2024 encontrado.";
   } catch (error) {
     console.error(error);
     resultsDiv.innerHTML = "Erro ao carregar os dados: " + (error.message || "Failed to fetch");
   }
 }
+
 
 carregarResultados();
