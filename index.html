@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Publications 2025</title>
+  <title>Publications 2024</title>
   <style>
     body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:#f7f9fc; color:#333; }
     header { background:#004d4d; padding:2em; text-align:center; }
@@ -19,7 +19,7 @@
   </style>
 </head>
 <body>
-  <header><h1>Publications 2025</h1></header>
+  <header><h1>Publications 2024</h1></header>
   <div id="results" class="loading">Carregando artigos...</div>
 
   <script>
@@ -28,21 +28,19 @@
 
     // Lista de autores destacados (padronize/adicione se quiser)
     const nomesDestacados = [
-      "Gustavo Burdman","Renata Zukanovich Funchal","Oscar Eboli","O. J. P. Eboli",
-      "Gustavo F. S. Alves","Matheus Martines","Luighi P. S. Leal","L.P. Santos Leal",
-      "L. P. Santos Leal","L. P. S. Leal","Peter Reimitz","Ana Luisa Foguel",
-      "Gabriel M. Salla","Oscar J. P. Éboli","Lucas Magno D. Ramos",
-      "Gustavo S.S. Sakoda","G.S.S. Sakoda","Disha Bhatia","Sujay Shil",
-      "Rafiqul Rahaman","Barbara Amaral","Eduardo Casali","Frederique Grassi",
-      "J.C.A. Barata","João C. A. Barata","Joao C. A. Barata","L.R.W.Abramo",
-      "L. Raul Abramo","R. Abramo","Raul Abramo","Natália V.N. Rodrigues",
-      "Marcos Lima","Matthew Luzum","Luis Raul Abramo","João Vitor Dinarte Ferri",
-      "Igor Neiva Mesquita","Álvaro S. de Jesus","Á.S. de Jesus","Naim Elias Comar",
-      "Alisson Tezzin","Ian Tashiro","Kevin Pala","Pedro Ishida",
-      "L. R. Abramo","O. J. P. Éboli","Bárbara Amaral","R. Zukanovich Funchal",
-      "Pedro Bittar","Gabriel Santos Menezes","Ricardo Correa da Silva","R Correa da Silva",
-      "RC da Silva","Lua F. T. Airoldi","Victor Hugo M. Ramos","Victor Hugo Marques Ramos",
-      "Henrique Ay Casa Grande", "Cleverson Andrade Goulart", "Mauricio Porto Pato"
+      "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
+      "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
+      "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
+      "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
+      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
+      "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali", "Elisa G.M. Ferreira",
+      "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
+      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
+      "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
+      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
+      "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
+      "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
+      "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi"
     ];
 
     const resultsDiv = document.getElementById("results");
@@ -112,8 +110,8 @@
         // converte para objetos JS
         let entries = entriesNodes.map(parseEntry);
 
-        // filtra só 2025
-        entries = entries.filter(e => e.published && e.published.startsWith("2025"));
+        // filtra só 2024
+        entries = entries.filter(e => e.published && e.published.startsWith("2024"));
 
         // dedupe por id
         entries = dedupe(entries);
@@ -129,7 +127,7 @@
 
         if (!entries.length) {
           resultsDiv.className = "";
-          resultsDiv.innerHTML = '<div class="muted">Nenhum artigo de 2025 encontrado para os autores destacados.</div>';
+          resultsDiv.innerHTML = '<div class="muted">Nenhum artigo de 2024 encontrado para os autores destacados.</div>';
           return;
         }
 
@@ -174,6 +172,7 @@
   </script>
 </body>
 </html>
+
 
 
 
