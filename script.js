@@ -14,7 +14,7 @@ const nomesDestacados = [
       "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
       "Luís F. Santos", "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
-      "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi"
+      "R. Zukanovich Funchal", "Pedro Bittar", "Rafael Grossi","J. Frenkel","S. Martins-Filho"
 ];
 
 const resultsDiv = document.getElementById("results");
@@ -94,3 +94,4 @@ async function carregarResultados() {
 
 
 carregarResultados();
+
